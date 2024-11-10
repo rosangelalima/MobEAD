@@ -9,8 +9,10 @@ pipeline {
         }
         stage('Build') {
             steps {
-                // Se o projeto não utilizar Maven ou Gradle, você pode rodar um comando simples como "echo"
-                echo 'Executando build do projeto' // Exemplo de comando simples
+                // Caso o projeto não precise de uma ferramenta como Maven ou Gradle, pode usar o 'echo'
+                echo 'Executando build do projeto'  // Comando simples de exemplo
+                // Exemplo para rodar Maven:
+                // sh 'mvn clean install'  // Se o projeto usar Maven, descomente esta linha
             }
         }
         stage('SonarQube Analysis') {
@@ -21,7 +23,7 @@ pipeline {
                 script {
                     def scannerHome = tool 'SonarQube Scanner'  // Nome da ferramenta configurada no Jenkins
                     withSonarQubeEnv('SonarQube') {  // Nome do servidor SonarQube configurado no Jenkins
-                        // Comando que executa o scanner do SonarQube
+                        // Executa o comando para rodar o SonarQube Scanner
                         sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=MobEAD -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}"
                     }
                 }
@@ -29,8 +31,8 @@ pipeline {
         }
         stage('Quality Gate') {
             steps {
-                // Verifica se a qualidade do código está ok no SonarQube
-                waitForQualityGate abortPipeline: true  // Abortará o pipeline se a qualidade não for atendida
+                // Verifica a análise de qualidade no SonarQube e, se não aprovado, aborta a pipeline
+                waitForQualityGate abortPipeline: true  // Se o Quality Gate falhar, o pipeline será abortado
             }
         }
     }
