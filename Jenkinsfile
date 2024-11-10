@@ -3,19 +3,18 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Faz o checkout do repositório
                 git 'https://github.com/rosangelalima/MobEAD.git'  // Substitua pela URL do seu repositório
             }
         }
         stage('Build') {
             steps {
-                // Adicione os comandos de build aqui, como Maven, Gradle, etc.
-                sh 'mvn clean install'  // Exemplo para Maven, substitua conforme necessário
+                // Se não usar Maven ou Gradle, pode usar um comando simples, como echo
+                echo 'Realizando build'
             }
         }
         stage('SonarQube Analysis') {
             environment {
-                SONAR_TOKEN = credentials('SONAR_TOKEN')  // Referência ao token armazenado no Jenkins
+                SONAR_TOKEN = credentials('SONAR_TOKEN')  // Token que você criou no Jenkins
             }
             steps {
                 script {
@@ -28,7 +27,7 @@ pipeline {
         }
         stage('Quality Gate') {
             steps {
-                waitForQualityGate abortPipeline: true  // Aguarda pela análise de qualidade do SonarQube
+                waitForQualityGate abortPipeline: true  // Aguarda a análise de qualidade
             }
         }
     }
