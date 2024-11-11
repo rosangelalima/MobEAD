@@ -1,32 +1,49 @@
-pipeline {  
+pipeline {
+    agent any
+
     environment {
-      registry = "osanamgcj/mobead_image_build"
-      registryCredential = 'dockerhub'
-      dockerImage = ''
+        SONAR_HOST_URL = 'http://localhost:9000'  // URL do seu servidor SonarQube
+        SONAR_TOKEN = credentials('SONAR_TOKEN')  // Credenciais armazenadas no Jenkins
     }
-    agent any 
-    stages { 
-        stage('Lint Dockerfile'){ 
-            steps{
-                echo "Pipeline Usando Jenkinsfile"
-                sh 'docker run --rm -i hadolint/hadolint < Dockerfile'
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clona o código do repositório Git
+                git url: 'https://github.com/rosangelalima/MobEAD.git', branch: 'main'
             }
         }
-        stage('Build image') {
-            steps{
+
+        stage('SonarQube Analysis') {
+            steps {
                 script {
-                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                    // Substitui as variáveis manualmente se necessário
+                    bat 'mvn clean install sonar:sonar -Dsonar.host.url="http://localhost:9000" -Dsonar.login="sqa_b3eee5cabfe19d0c70a1722f4a64394e63c25725"'
                 }
             }
         }
-        stage('Delivery image') {
-            steps{
-                script {
-                  docker.withRegistry('https://registry-1.docker.io/v2/', 'dockerhub') {
-                   dockerImage.push("$BUILD_NUMBER")
-                  }
-                }
+
+        stage('Build') {
+            steps {
+                // Realiza o build do código
+                bat 'mvn clean package'
             }
         }
-    } 
+
+        stage('Deploy') {
+            steps {
+                // Realiza o deploy (se aplicável)
+                echo 'Deploying application...'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
 }
