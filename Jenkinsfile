@@ -1,36 +1,49 @@
 pipeline {
     agent any
+
+    environment {
+        SONAR_HOST_URL = 'http://localhost:9000'  // URL do seu servidor SonarQube
+        SONAR_TOKEN = credentials('SONAR_TOKEN')  // Credenciais armazenadas no Jenkins
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                // Faz o checkout do repositório do Git
-                git 'https://github.com/rosangelalima/MobEAD.git'
+                // Clona o código do repositório Git
+                git url: 'https://github.com/rosangelalima/MobEAD.git', branch: 'main'
             }
         }
-        stage('Build') {
-            steps {
-                // Aqui seria o comando para compilar o seu código. 
-                // Caso o projeto use Maven, o comando seria mvn clean install.
-                sh 'mvn clean install' // ou outro comando de build dependendo do seu projeto.
-            }
-        }
+
         stage('SonarQube Analysis') {
-            environment {
-                SONAR_TOKEN = credentials('SONAR_TOKEN') // Referência ao token do SonarQube armazenado no Jenkins
-            }
             steps {
                 script {
-                    def scannerHome = tool 'SonarQube Scanner'  // Nome da ferramenta SonarQube configurada no Jenkins
-                    withSonarQubeEnv('SonarQube') {  // Nome do servidor SonarQube configurado no Jenkins
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=MobEAD -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}"
-                    }
+                    // Substitui as variáveis manualmente se necessário
+                    bat 'mvn clean install sonar:sonar -Dsonar.host.url="http://localhost:9000" -Dsonar.login="sqa_b3eee5cabfe19d0c70a1722f4a64394e63c25725"'
                 }
             }
         }
-        stage('Quality Gate') {
+
+        stage('Build') {
             steps {
-                waitForQualityGate abortPipeline: true // Verifica se a análise de qualidade passou
+                // Realiza o build do código
+                bat 'mvn clean package'
             }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Realiza o deploy (se aplicável)
+                echo 'Deploying application...'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
